@@ -36,6 +36,26 @@ class CategoryController extends Controller
         return response()->json(['success'=>'Saved']);
     }
 
+    public function update(Request $request)
+    {
+        //return response()->json($request);
+        $validate = Validator::make($request->all(),[
+            'name' => 'required|max:50',
+            'type' => 'required',
+        ]);
+
+        if($validate->fails())
+        {
+            return response()->json(['errors' => $validate->messages()]);
+        }
+        $category = Category::find($request->id);
+        $category->name = $request->name;
+        $category->type = $request->type;
+        $category->save();
+
+        return response()->json(['success'=>'Updated']);
+    }
+
     public function get(Request $request)
     {
     	$category = Category::find($request->id);

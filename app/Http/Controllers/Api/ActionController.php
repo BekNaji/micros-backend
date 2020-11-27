@@ -6,12 +6,14 @@ use Illuminate\Http\Request;
 use App\Action;
 use App\Http\Controllers\Controller;
 use Validator;
-
+use Carbon\Carbon;
 class ActionController extends Controller
 {
+
 	// get all actions data
     public function all(Request $request)
     {
+        
     	$actions = Action::orderBy('id','DESC')->get();
 
         //dd(date('d.m.Y H:i:s',strtotime($actions[0]->created_date)));

@@ -34,6 +34,7 @@ Route::prefix('category')->group(function() {
 	Route::get('all','Api\CategoryController@all');
 	Route::get('get','Api\CategoryController@get');
 	Route::post('save','Api\CategoryController@save');
+	Route::post('update','Api\CategoryController@update');
 	Route::post('delete','Api\CategoryController@delete');
 	Route::get('getGain','Api\CategoryController@getGain');
 	Route::get('getCost','Api\CategoryController@getCost');
