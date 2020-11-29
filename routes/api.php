@@ -23,11 +23,10 @@ Route::middleware(['api','cors'])->prefix('action')->group(function() {
 
 	Route::get('all','Api\ActionController@all');
 	Route::get('get','Api\ActionController@get');
-	Route::get('gain','Api\ActionController@gain');
 	Route::post('save','Api\ActionController@save');
 	Route::post('delete','Api\ActionController@delete');
 	Route::post('update','Api\ActionController@update');
-	Route::get('ie','Api\ActionController@ie');
+	Route::get('filter','Api\ActionController@filter');
 });
 
 Route::prefix('category')->group(function() {

@@ -9,6 +9,7 @@ use Validator;
 
 class CategoryController extends Controller
 {
+    // get all  category
     public function all()
     {
         $category = Category::orderBy('id','DESC')->get();
@@ -16,19 +17,21 @@ class CategoryController extends Controller
         return response()->json($category);
     }
 
+    // save category
     public function save(Request $request)
     {
         //return response()->json($request);
-        $validate = Validator::make($request->all(),[
-            'name' => 'required|max:50',
-            'type' => 'required',
+        $validate   = Validator::make($request->all(),
+        [
+            'name'  => 'required|max:50',
+            'type'  => 'required',
         ]);
 
         if($validate->fails())
         {
             return response()->json(['errors' => $validate->messages()]);
         }
-        $category = new Category();
+        $category       = new Category();
         $category->name = $request->name;
         $category->type = $request->type;
         $category->save();
@@ -36,19 +39,20 @@ class CategoryController extends Controller
         return response()->json(['success'=>'Saved']);
     }
 
+    // update category according to id
     public function update(Request $request)
     {
-        //return response()->json($request);
-        $validate = Validator::make($request->all(),[
-            'name' => 'required|max:50',
-            'type' => 'required',
+
+        $validate   = Validator::make($request->all(),[
+            'name'  => 'required|max:50',
+            'type'  => 'required',
         ]);
 
         if($validate->fails())
         {
             return response()->json(['errors' => $validate->messages()]);
         }
-        $category = Category::find($request->id);
+        $category       = Category::find($request->id);
         $category->name = $request->name;
         $category->type = $request->type;
         $category->save();
@@ -56,14 +60,15 @@ class CategoryController extends Controller
         return response()->json(['success'=>'Updated']);
     }
 
+    // get one category data according to id
     public function get(Request $request)
     {
     	$category = Category::find($request->id);
     	
-
     	return response()->json($category);
     }
 
+    // get Income categories
     public function getGain(Request $request)
     {
     	$category = Category::where('type','=','gain')->orderBy('name')->get();
@@ -71,6 +76,7 @@ class CategoryController extends Controller
         return response()->json($category);
     }
 
+    // get Expense categories
     public function getCost(Request $request)
     {
         $category = Category::where('type','=','cost')->orderBy('name')->get();
@@ -78,6 +84,7 @@ class CategoryController extends Controller
         return response()->json($category);
     }
 
+    // delete category according to id
     public function delete(Request $request)
     {
         $category = Category::find($request->id);

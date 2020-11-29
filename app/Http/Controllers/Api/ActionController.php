@@ -6,7 +6,8 @@ use Illuminate\Http\Request;
 use App\Action;
 use App\Http\Controllers\Controller;
 use Validator;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
+
 class ActionController extends Controller
 {
 
@@ -14,32 +15,34 @@ class ActionController extends Controller
     public function all(Request $request)
     {
         
-    	$actions = Action::orderBy('id','DESC')->get();
+    	$actions = Action::orderBy('created_date','DESC')->get();
 
-        //dd(date('d.m.Y H:i:s',strtotime($actions[0]->created_date)));
     	$datas = [];
 
     	foreach ($actions as $action) {
     		$data = [
-    			'id' => $action->id,
-    			'name' => $action->category->name,
-    			'comment' => $action->comment,
-    			'type' => $action->category->type,
-    			'date' => date('d.m.Y H:i:s',strtotime($action->created_date)),
-    			'sum' => $action->sum,
+    			'id'         => $action->id,
+    			'name'       => $action->category->name,
+    			'comment'    => $action->comment,
+    			'type'       => $action->category->type,
+    			'date'       => date('d.m.Y H:i:s',strtotime($action->created_date)),
+    			'sum'        => $action->sum,
     		];
 
     		array_push($datas,$data);
     	}
+
+        // get total expense and income
+        $total = $this->ie($actions);
     	
-    	return response()->json($datas);
+    	return response()->json(['actions'=>$datas,'total'=>$total]);
 
     }
 
     // Income and Expense
-    public function ie()
+    public function ie($query)
     {
-        $actions = Action::orderBy('id','DESC')->get();
+        $actions = $query;
 
         $totalIncome = 0;
 
@@ -62,34 +65,10 @@ class ActionController extends Controller
             }
             
         }
+        $datas = ['gain' => $totalIncome,'cost' => $totalExpense];
 
-        return response()->json(['gain' => $totalIncome,'cost' => $totalExpense]);
+        return $datas;
         
-
-        
-    }
-
-    // get category where type == gain
-    public function gain(Request $request)
-    {
-    	$actions = Action::where('type','=','gain')->orderBy('id','DESC')->get();
-
-    	$datas = [];
-
-    	foreach ($actions as $action) {
-    		$data = [
-    			'id' => $action->id,
-    			'name' => $action->category->name,
-    			'comment' => $action->comment,
-    			'type' => $action->category->type,
-    			'date' => date('d.m.Y H:i:s',strtotime($action->created_date)),
-    			'sum' => $action->sum,
-    		];
-
-    		array_push($datas,$data);
-    	}
-    	
-    	return response()->json($datas);
     }
 
     // save action
@@ -98,11 +77,11 @@ class ActionController extends Controller
 
         $validate = Validator::make($request->all(),
             [
-            'category' => 'required',
-            'comment' => 'max:255',
-            'dateNow' => 'required',
-            'sum' => 'required',
-            'type' => 'required'
+            'category'  => 'required',
+            'comment'   => 'max:255',
+            'dateNow'   => 'required',
+            'sum'       => 'required',
+            'type'      => 'required'
         ]);
 
         if($validate->fails())
@@ -110,12 +89,14 @@ class ActionController extends Controller
             return response()->json(['errors' => $validate->messages()]);
         }
 
-        $action = new Action();
-        $action->category_id = $request->category;
-        $action->comment = $request->comment;
-        $action->sum = $request->sum;
-        $action->type = $request->type;
-        $action->created_date = $request->dateNow;
+        $action                 = new Action();
+        $action->category_id    = $request->category;
+        $action->comment        = $request->comment;
+        $action->sum            = $request->sum;
+        $action->type           = $request->type;
+
+                                  // 20-11-29 T07:43:00 to  20-11-29 07:43:00
+        $action->created_date   = Carbon::parse($request->dateNow)->format('Y-m-d h:i:s');
         $action->save();
 
         return ['success'=>'Saved'];
@@ -125,15 +106,14 @@ class ActionController extends Controller
     // update action according to id
     public function update(Request $request)
     {
-        //return $request->comment;
         
         $validate = Validator::make($request->all(),
             [
-            'category' => 'required',
-            'comment' => 'max:255',
-            'dateNow' => 'required',
-            'sum' => 'required',
-            'type' => 'required'
+            'category'      => 'required',
+            'comment'       => 'max:255',
+            'dateNow'       => 'required',
+            'sum'           => 'required',
+            'type'          => 'required'
         ]);
 
         if($validate->fails())
@@ -142,11 +122,13 @@ class ActionController extends Controller
         }
 
         $action = Action::find($request->id);
-        $action->category_id = $request->category;
-        $action->comment = $request->comment;
-        $action->sum = $request->sum;
-        $action->type = $request->type;
-        $action->created_date = $request->dateNow;
+        $action->category_id    = $request->category;
+        $action->comment        = $request->comment;
+        $action->sum            = $request->sum;
+        $action->type           = $request->type;
+
+                                 // 20-11-29 T07:43:00 to  20-11-29 07:43:00
+        $action->created_date   = Carbon::parse($request->dateNow)->format('Y-m-d h:i:s');
         $action->save();
 
         return ['success'=>'Saved'];
@@ -159,17 +141,71 @@ class ActionController extends Controller
         $action = Action::find($request->id);
 
         $data = [
-            'id'        => $action->id,
-            'category'  =>$action->category_id,
-            'comment'   =>$action->comment,
-            'sum'       =>$action->sum,
-            'type'      =>$action->type,
-            'dateNow'   =>$action->created_date,
+            'id'                => $action->id,
+            'category'          => $action->category_id,
+            'category_name'     => $action->category->name,
+            'comment'           => $action->comment,
+            'sum'               => $action->sum,
+            'type'              => $action->type,
+            'dateNow'           => Carbon::parse($action->created_date)->format('Y-m-d\Th:i'),
         ];
 
         return response()->json($data);
     }
 
+    // make filter
+    public function filter(Request $request)
+    {
+
+        // convert to special date type
+        $to   = Carbon::parse($request->to.' 23:59:59')->format('Y-m-d H:i:s');
+
+        // query 
+        $actions = Action::orderBy('created_date','DESC')->where('created_date','<=',$to);
+
+        if($request->from != '')
+        {
+            // convert to special date type 
+            $from = Carbon::parse($request->from.' 00:00:00')->format('Y-m-d H:i:s');
+            $actions->where('created_date','>=',$from);
+
+        }
+                        
+        if($request->type != 'All')
+        {   
+            $actions->where('type','=',$request->type);
+        }
+
+        if($request->status != 'All')
+        {   
+            $actions->where('category_id','=',$request->status);
+        }
+
+        $actions = $actions->get();
+
+
+        $datas = [];
+
+        foreach ($actions as $action) {
+            $data = [
+                'id'         => $action->id,
+                'name'       => $action->category->name,
+                'comment'    => $action->comment,
+                'type'       => $action->type,
+                'date'       => date('d.m.Y H:i:s',strtotime($action->created_date)),
+                'sum'        => $action->sum,
+            ];
+
+            array_push($datas,$data);
+        }
+
+        // get total expense and income
+        $total = $this->ie($actions);
+
+        return response()->json(['actions'=>$datas,'total'=>$total]);
+    }
+
+    // delete
     public function delete(Request $request)
     {
         $action = Action::find($request->id);
