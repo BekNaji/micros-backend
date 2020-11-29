@@ -146,7 +146,7 @@ class ActionController extends Controller
             'category_name'     => $action->category->name,
             'comment'           => $action->comment,
             'sum'               => $action->sum,
-            'type'              => $action->type,
+            'type'              => $action->category->type,
             'dateNow'           => Carbon::parse($action->created_date)->format('Y-m-d\Th:i'),
         ];
 
